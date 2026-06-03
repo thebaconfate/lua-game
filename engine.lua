@@ -33,27 +33,27 @@ ffi.cdef [[
 -- 2. Load the native Linux shared library
 local SDL = ffi.load("SDL2")
 
+---@type Constants
+local C = require("constants")
+
+
 -- Initialize Video Subsystem
 if SDL.SDL_Init(0x00000020) ~= 0 then error("SDL Init Failed") end
 
--- Constants
-local WIDTH, HEIGHT = 320, 240
-local SCALE = 4
-local VRAM_SIZE = WIDTH * HEIGHT * 4 -- RGBA
 
 -- Create Window, Accelerator Renderer, and a Streaming VRAM Texture
-local window = SDL.SDL_CreateWindow("Pure Rawdog Lua Engine", 450, 450, WIDTH * SCALE, HEIGHT * SCALE, 0)
+local window = SDL.SDL_CreateWindow("Pure Rawdog Lua Engine", 450, 450, C.WIDTH * C.SCALE, C.HEIGHT * C.SCALE, 0)
 local renderer = SDL.SDL_CreateRenderer(window, -1, 0x00000002)
 -- 0x16562004 is SDL_PIXELFORMAT_RGBA8888
-local texture = SDL.SDL_CreateTexture(renderer, 0x16562004, 2, WIDTH, HEIGHT)
+local texture = SDL.SDL_CreateTexture(renderer, 0x16562004, 2, C.WIDTH, C.HEIGHT)
 
 -- 3. Allocate our raw, pure software VRAM array
-local vram = ffi.new("uint8_t[?]", VRAM_SIZE)
+local vram = ffi.new("uint8_t[?]", C.VRAM_SIZE)
 
 -- Primitive Draw Function
 local function draw_pixel(x, y, r, g, b)
-    if x >= 0 and x < WIDTH and y >= 0 and y < HEIGHT then
-        local index     = (y * WIDTH + x) * 4
+    if x >= 0 and x < C.WIDTH and y >= 0 and y < C.HEIGHT then
+        local index     = (y * C.WIDTH + x) * 4
         vram[index]     = r
         vram[index + 1] = g
         vram[index + 2] = b
@@ -76,8 +76,8 @@ while running do
     end
 
     -- Clear VRAM state manually (Paint background dark green)
-    ffi.fill(vram, VRAM_SIZE, 0)
-    for i = 0, VRAM_SIZE - 1, 4 do
+    ffi.fill(vram, C.VRAM_SIZE, 0)
+    for i = 0, C.VRAM_SIZE - 1, 4 do
         vram[i] = 15; vram[i + 1] = 35; vram[i + 2] = 15; vram[i + 3] = 255
     end
 
@@ -93,7 +93,7 @@ while running do
     end
 
     -- Shovel our CPU-managed memory straight over to the graphics window context
-    SDL.SDL_UpdateTexture(texture, nil, vram, WIDTH * 4)
+    SDL.SDL_UpdateTexture(texture, nil, vram, C.WIDTH * 4)
     SDL.SDL_RenderClear(renderer)
     SDL.SDL_RenderCopy(renderer, texture, nil, nil)
     SDL.SDL_RenderPresent(renderer)
